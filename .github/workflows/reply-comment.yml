@@ -1,0 +1,25 @@
+name: Reply to Comments
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  reply_to_comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Reply to Comment
+        if: startsWith(github.event.comment.body, '/reply')
+        run: |
+          COMMENT_BODY=${{ github.event.comment.body }}
+          IFS=' ' read -ra COMMENT_COMMAND <<< "$COMMENT_BODY"
+          REPLY_CONTENT="${COMMENT_COMMAND[@]:1}"
+          curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+               -H "Content-Type: application/json" \
+               -d "{\"body\": \"$REPLY_CONTENT\"}" \
+               "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${{ github.event.issue.number }}/comments"
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
