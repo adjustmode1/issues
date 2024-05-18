@@ -1,0 +1,15 @@
+name: Issue Update Logger
+
+on:
+  issues:
+    types: [edited]
+
+jobs:
+  log-issue-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log Issue Update
+        run: |
+          echo "Issue updated: ${{ github.event.issue.title }}"
+          echo "Changes:"
+          echo "${{ github.event.changes }}"
