@@ -1,15 +1,21 @@
-name: Issue Update Logger
+name: Log Point Changes
 
 on:
   issues:
     types: [edited]
 
 jobs:
-  log-issue-update:
+  log_point_changes:
     runs-on: ubuntu-latest
     steps:
-      - name: Log Issue Update
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Log Point Changes
+        if: github.event.issue.fields.point != null && github.event.changes.point != null
         run: |
-          echo "Issue updated: ${{ github.event.issue.title }}"
-          echo "Changes:"
-          echo "${{ github.event.changes }}"
+          echo "Issue ${ISSUE_NUMBER} point changed from ${OLD_POINT} to ${NEW_POINT}"
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          OLD_POINT: ${{ github.event.changes.point.from }}
+          NEW_POINT: ${{ github.event.changes.point.to }}
