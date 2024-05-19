@@ -1,53 +1,54 @@
-name: Update Point Comment
+name: Log Point Field Update in Project
 on:
-  issues:
-    types: [edited]
+  project:
+    types: [moved, closed]
 
 jobs:
-  update_comment:
+  log_point_update:
     runs-on: ubuntu-latest
     steps:
-      - name: Check if point changed
-        id: check_point
-        uses: actions/github-script@v5  # Đã cập nhật từ v4 sang v5
+      - name: Check if point field updated in project
+        id: check_point_update
+        uses: actions/github-script@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const payload = context.payload;
-            const issue = payload.issue;
-            const changes = payload.changes;
-
-            // Log payload và issue
-            console.log('context:', context);
+            console.log("payload: ",JSON.stringtify(payload, null, 2))
             
-            // Check if the issue was edited and if the point field was changed
-            if (changes && 'point' in changes) {
-              const oldPoint = changes['point'].from;
-              const newPoint = changes['point'].to;
-              return {
-                pointChanged: true,
-                oldPoint: oldPoint,
-                newPoint: newPoint
-              };
-            } else {
-              return {
-                pointChanged: false
-              };
+            // Check if this is a project move event
+            if (payload.action !== 'moved') {
+              return { pointFieldUpdated: false };
             }
+            
+            const projectCard = payload.project_card;
+            const contentURL = projectCard.content_url;
 
-      - name: Update issue comment
-        if: steps.check_point.outputs.pointChanged == 'true'
-        uses: actions/github-script@v5  # Đã cập nhật từ v4 sang v5
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const issueNumber = context.issue.number;
-            const oldPoint = '${{ steps.check_point.outputs.oldPoint }}';
-            const newPoint = '${{ steps.check_point.outputs.newPoint }}';
-            const commentBody = `adjustmode1 updated point from ${oldPoint} to ${newPoint}.`;
-            github.issues.createComment({
-              issue_number: issueNumber,
+            // Get the issue associated with the project card
+            const issueResponse = await github.request('GET /repos/{owner}/{repo}/issues', {
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: commentBody
+              headers: {
+                Accept: 'application/vnd.github.v3+json',
+              },
+              params: {
+                state: 'all',
+                per_page: 1,
+                url: contentURL
+              }
             });
+
+            console.log("point: ",JSON.stringtify(issueResponse, null, 2))
+
+            const issue = issueResponse.data[0];
+            const pointField = 'point'; // Update this if your field name is different
+
+            // Check if 'point' field updated in the issue
+            const hasPointFieldUpdated = 'changes' in issue && pointField in issue.changes;
+
+            return { pointFieldUpdated: hasPointFieldUpdated };
+
+      - name: Log point field update in project
+        if: steps.check_point_update.outputs.pointFieldUpdated == true
+        run: |
+          echo "Point field has been updated in the project associated with the issue."
