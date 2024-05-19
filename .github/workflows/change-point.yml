@@ -18,8 +18,7 @@ jobs:
             const changes = payload.changes;
 
             // Log payload và issue
-            console.log('Payload:', payload);
-            console.log('Issue:', issue);
+            console.log('context:', context);
             
             // Check if the issue was edited and if the point field was changed
             if (changes && 'point' in changes) {
