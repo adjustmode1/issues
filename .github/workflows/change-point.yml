@@ -1,21 +1,49 @@
-name: Log Point Changes
-
+name: Update Issue Comment
 on:
   issues:
     types: [edited]
 
 jobs:
-  log_point_changes:
+  update_comment:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - name: Check if point changed
+        id: check_point
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const payload = context.payload;
+            const issue = payload.issue;
+            const changes = payload.changes;
 
-      - name: Log Point Changes
-        if: github.event.issue.fields.point != null && github.event.changes.point != null
-        run: |
-          echo "Issue ${ISSUE_NUMBER} point changed from ${OLD_POINT} to ${NEW_POINT}"
-        env:
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-          OLD_POINT: ${{ github.event.changes.point.from }}
-          NEW_POINT: ${{ github.event.changes.point.to }}
+            // Check if the issue was edited and if the point field was changed
+            if (changes && 'point' in changes) {
+              const oldPoint = changes['point'].from;
+              const newPoint = changes['point'].to;
+              return {
+                pointChanged: true,
+                oldPoint: oldPoint,
+                newPoint: newPoint
+              };
+            } else {
+              return {
+                pointChanged: false
+              };
+            }
+
+      - name: Update issue comment
+        if: steps.check_point.outputs.pointChanged == 'true'
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issueNumber = context.issue.number;
+            const newPoint = '${{ steps.check_point.outputs.newPoint }}';
+            const commentBody = `The point has been updated to ${newPoint}.`;
+            github.issues.createComment({
+              issue_number: issueNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody
+            });
