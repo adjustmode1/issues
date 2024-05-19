@@ -1,4 +1,4 @@
-name: Update Issue Comment
+name: Update Point Comment
 on:
   issues:
     types: [edited]
@@ -39,8 +39,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const issueNumber = context.issue.number;
+            const oldPoint = '${{ steps.check_point.outputs.oldPoint }}';
             const newPoint = '${{ steps.check_point.outputs.newPoint }}';
-            const commentBody = `The point has been updated to ${newPoint}.`;
+            const commentBody = `adjustmode1 updated point from ${oldPoint} to ${newPoint}.`;
             github.issues.createComment({
               issue_number: issueNumber,
               owner: context.repo.owner,
