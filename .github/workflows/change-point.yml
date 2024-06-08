@@ -17,9 +17,8 @@ jobs:
         uses: octokit/request-action@v2.x
         with:
           route: GET /repos/${{ github.repository }}/issues/${{ github.event.issue.number }}
-          mediaType: |
-            previews:
-              - symmetra
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Post a comment with the milestone update
         uses: actions/github-script@v6
@@ -35,3 +34,5 @@ jobs:
               issue_number: issueNumber,
               body: comment
             });
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
