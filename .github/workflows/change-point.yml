@@ -11,6 +11,8 @@ on:
   project_card:
     types: 
       - edited
+      - converted
+      - created
   project_column:
     types: 
       - edited
