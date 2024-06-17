@@ -1,38 +1,20 @@
-name: Milestone Update
+name: Closed Milestones
 
 on:
-  issues:
-    types: [milestoned]
+  milestone:
+    types: [closed]
+
+permissions:
+  issues: write
+  pull-requests: write
 
 jobs:
-  comment_on_update:
+  Comment:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check out the repository
-        uses: actions/checkout@v2
-
-      - name: Get issue information
-        id: issue_info
-        uses: octokit/request-action@v2.x
+      - uses: bflad/action-milestone-comment@v2
         with:
-          route: GET /repos/${{ github.repository }}/issues/${{ github.event.issue.number }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            This functionality has been released in ${{ github.event.milestone.title }}.
 
-      - name: Post a comment with the milestone update
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const oldMilestone = "old_value"; // Cần thay thế giá trị này bằng cách lưu trữ thông tin trước đó
-            const newMilestone = "${{ github.event.issue.milestone.title }}";
-            const issueNumber = ${{ github.event.issue.number }};
-            const comment = `Milestone custom field changed from "${oldMilestone}" to "${newMilestone}"`;
-
-            await github.issues.createComment({
-              ...context.repo,
-              issue_number: issueNumber,
-              body: comment
-            });
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            For further feature requests or bug reports with this functionality, please create a [new GitHub issue](https://github.com/${{ github.repository }}/issues/new/choose) following the template. Thank you!
